@@ -39,6 +39,13 @@ public class WebViewController: UIViewController, WKNavigationDelegate, WKUIDele
         self.view.addGestureRecognizer(swipeBack)
         
         view.addSubview(webView)
+        webView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            webView.topAnchor.constraint(equalTo: view.topAnchor),
+            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
         
         webView.frame = view.bounds
         
