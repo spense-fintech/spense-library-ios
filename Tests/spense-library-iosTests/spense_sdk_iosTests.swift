@@ -1,5 +1,5 @@
 import XCTest
-@testable import spense_sdk_ios
+@testable import spense_library_ios
 
 final class spense_sdk_iosTests: XCTestCase {
     func testExample() throws {
