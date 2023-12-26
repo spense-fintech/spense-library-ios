@@ -17,6 +17,7 @@ public class WebViewController: UIViewController, WKNavigationDelegate, WKUIDele
         let webview = WKWebView()
         webview.navigationDelegate = self
         webview.uiDelegate = self
+        webview.scrollView.isScrollEnabled = true
         return webview
     }()
     var urlString: String?

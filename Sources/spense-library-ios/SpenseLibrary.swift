@@ -37,11 +37,7 @@ public class SpenseLibrary {
         viewController.present(navVC, animated: true, completion: nil)
     }
     
-    public func getViewController(withSlug slug: String) -> UIViewController {
-        return WebViewController(urlString: "\(hostName ?? "https://partner.uat.spense.money")\(slug)")
-    }
-    
-    public func getNavViewController(withSlug slug: String) -> UINavigationController {
+    public func getViewController(withSlug slug: String) -> UINavigationController {
         let webVC = WebViewController(urlString: "\(hostName ?? "https://partner.uat.spense.money")\(slug)")
         let navVC = UINavigationController(rootViewController: webVC)
         navVC.modalPresentationStyle = .fullScreen
