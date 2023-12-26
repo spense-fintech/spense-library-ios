@@ -9,7 +9,7 @@ import Foundation
 
 @available(iOS 15.0, *)
 public class SpenseLibrarySingleton {
-    static let shared = SpenseLibrarySingleton()
+    public static let shared = SpenseLibrarySingleton()
 
     private var spenseLibrary: SpenseLibrary?
 
