@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 @available(iOS 15.0, *)
 public class SpenseLibrary {
@@ -28,6 +29,17 @@ public class SpenseLibrary {
             throw SpenseError.hostnameNotSet
         }
         return try await NetworkManager.shared.makeRequest(url: URL(string: "\(hostName)/api/user/token")!, method: "POST", jsonPayload: ["token": token])
+    }
+    
+    public func bindDevice(on viewController: UIViewController) {
+        let swiftUIView = DeviceBindingWaitingView()
+        let hostingController = UIHostingController(rootView: swiftUIView)
+        
+        // Configure the hosting controller
+        hostingController.modalPresentationStyle = .fullScreen
+        
+        // Present the hosting controller
+        viewController.present(hostingController, animated: true, completion: nil)
     }
     
     public func open(on viewController: UIViewController, withSlug slug: String) {
