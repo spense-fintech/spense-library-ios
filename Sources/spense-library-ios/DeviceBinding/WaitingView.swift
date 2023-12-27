@@ -34,6 +34,9 @@ struct WaitingView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.gray.opacity(0.6))
         .onAppear {
+            Task {
+                await initiateDeviceBinding()
+            }
             // Simulate device verification delay
 //            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
 //                // Update this logic as per your requirement
