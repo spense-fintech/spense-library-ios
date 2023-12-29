@@ -12,6 +12,7 @@ import SwiftUI
 public class SpenseLibrary {
     
     private(set) var hostName: String?
+    var onMPINSetupSuccess: (() -> Void)?
     
     init(hostName: String) {
         self.hostName = hostName
@@ -31,15 +32,21 @@ public class SpenseLibrary {
         return try await NetworkManager.shared.makeRequest(url: URL(string: "\(hostName)/api/user/token")!, method: "POST", jsonPayload: ["token": token])
     }
     
-    public func bindDevice(on viewController: UIViewController) {
-        let swiftUIView = DeviceBindingWaitingView()
-        let hostingController = UIHostingController(rootView: swiftUIView)
+    public func bindDevice(on viewController: UIViewController, completion: @escaping () -> Void) {
+        onMPINSetupSuccess = completion
+        let isMPINSet = !(SharedPreferenceManager.shared.getValue(forKey: "MPIN") ?? "").isEmpty
+        let rootView = isMPINSet
+        ? AnyView(MPINSetupView(isMPINSet: true, onSuccess: {
+            self.onMPINSetupSuccess?()
+        }))
+        : AnyView(DeviceBindingWaitingView(onSuccess: {
+            self.onMPINSetupSuccess?()
+        }))
         
-        // Configure the hosting controller
+        let hostingController = UIHostingController(rootView: rootView)
         hostingController.modalPresentationStyle = .fullScreen
-        
-        // Present the hosting controller
         viewController.present(hostingController, animated: true, completion: nil)
+        
     }
     
     public func open(on viewController: UIViewController, withSlug slug: String) {

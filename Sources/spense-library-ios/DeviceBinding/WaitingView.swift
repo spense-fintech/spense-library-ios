@@ -9,15 +9,31 @@ import SwiftUI
 
 @available(iOS 15.0, *)
 struct WaitingView: View {
+    
     @Binding var currentScreen: DeviceBindingWaitingView.Screen
+    @Binding var isShowingMessageCompose: Bool
+    @Binding var deviceAuthCode: String
+    @Binding var deviceId: Int
     
     private func initiateDeviceBinding() async {
         do {
-            let parameters = await ["device_uuid": UIDevice.current.identifierForVendor, "manufacturer": "Apple", "model": UIDevice.modelName, "os": "iOS", "os_version": UIDevice.current.systemVersion, "app_version": PackageInfo.version] as [String : Any]
-            let result = try await NetworkManager.shared.makeRequest(url: URL(string: "https://partner.uat.spense.money/api/device/bind")!, method: "POST", jsonPayload: parameters)
-            print(result)
+            let parameters = await ["device_uuid": UIDevice.current.identifierForVendor?.uuidString ?? "", "manufacturer": "Apple", "model": UIDevice.modelName, "os": "iOS", "os_version": UIDevice.current.systemVersion, "app_version": PackageInfo.version] as [String : Any]
+            print(parameters)
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "https://partner.uat.spense.money/api/device/bind")!, method: "POST", jsonPayload: parameters)
+            print(response)
+            if let authCode = response["device_auth"] as? String {
+                DispatchQueue.main.async {
+                    self.deviceAuthCode = authCode
+                    self.deviceId = response["device_id"] as! Int
+                    self.isShowingMessageCompose = true
+                }
+                // Show SMS composer
+            } else {
+                currentScreen = .failure
+            }
         } catch {
             print(error)
+            currentScreen = .failure
         }
     }
     
@@ -37,11 +53,6 @@ struct WaitingView: View {
             Task {
                 await initiateDeviceBinding()
             }
-            // Simulate device verification delay
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-//                // Update this logic as per your requirement
-////                currentScreen = .simSelection // or .failure
-//            }
         }
     }
 }
