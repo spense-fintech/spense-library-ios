@@ -33,14 +33,14 @@ public class SpenseLibrary {
     }
     
     public func bindDevice(on viewController: UIViewController, completion: @escaping () -> Void) {
-        onMPINSetupSuccess = completion
+//        onMPINSetupSuccess = completion
         let isMPINSet = !(SharedPreferenceManager.shared.getValue(forKey: "MPIN") ?? "").isEmpty
         let rootView = isMPINSet
         ? AnyView(MPINSetupView(isMPINSet: true, onSuccess: {
-            self.onMPINSetupSuccess?()
+            viewController.dismiss(animated: true, completion: completion)
         }))
         : AnyView(DeviceBindingWaitingView(onSuccess: {
-            self.onMPINSetupSuccess?()
+            viewController.dismiss(animated: true, completion: completion)
         }))
         
         let hostingController = UIHostingController(rootView: rootView)
