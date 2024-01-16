@@ -67,7 +67,7 @@ struct MPINSetupView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color("PrimaryColor"))
+                .background(Color(hex: 0x037EAB))
                 .cornerRadius(8)
         }
         .padding(.top, 60)

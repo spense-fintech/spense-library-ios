@@ -23,7 +23,7 @@ struct FailureView: View {
                 Text("Retry")
                     .foregroundColor(.white)
                     .padding()
-                    .background(Color.blue)
+                    .background(Color(hex: 0x037EAB))
                     .cornerRadius(8)
             }
         }

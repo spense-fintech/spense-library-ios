@@ -20,7 +20,7 @@ struct PinDigitView: View {
             .disableAutocorrection(true)
             .autocapitalization(.none)
             .frame(width: 48, height: 48)
-            .background(Color("LightGray"))
+            .background(Color(hex: 0xEBECEF))
             .cornerRadius(48)
             .padding(1)
         //            .onReceive(digit.publisher.collect()) {
