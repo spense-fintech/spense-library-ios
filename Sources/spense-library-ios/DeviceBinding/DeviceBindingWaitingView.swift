@@ -16,13 +16,14 @@ struct DeviceBindingWaitingView: View {
     @State private var deviceId = 0
     @State private var timer: Timer? = nil
     @State private var pollingCounter = 0
+    @State private var deviceBindingId = UUID().uuidString
     var onSuccess: () -> Void
     
     var body: some View {
         ZStack {
             switch currentScreen {
             case .waiting:
-                WaitingView(currentScreen: $currentScreen, isShowingMessageCompose: $isShowingMessageCompose, deviceAuthCode: $deviceAuthCode, deviceId: $deviceId)
+                WaitingView(currentScreen: $currentScreen, isShowingMessageCompose: $isShowingMessageCompose, deviceAuthCode: $deviceAuthCode, deviceId: $deviceId, deviceBindingId: $deviceBindingId)
             case .failure:
                 FailureView(currentScreen: $currentScreen)
             case .mpinsetup:
@@ -62,6 +63,7 @@ struct DeviceBindingWaitingView: View {
             let response = try await NetworkManager.shared.makeRequest(url: URL(string: "https://partner.uat.spense.money/api/device/binding/status/\(UIDevice.current.identifierForVendor?.uuidString ?? "")")!, method: "GET")
             if response["status"] as? String == "SUCCESS" {
                 timer?.invalidate()
+                SharedPreferenceManager.shared.setValue(deviceBindingId, forKey: "device_binding_id")
                 DispatchQueue.main.async {
                     currentScreen = .mpinsetup // Navigate to success view
                 }
