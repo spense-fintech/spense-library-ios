@@ -11,7 +11,7 @@ import SwiftUI
 @available(iOS 15.0, *)
 public class SpenseLibrary {
     
-    private(set) var hostName: String?
+    public private(set) var hostName: String?
     var onMPINSetupSuccess: (() -> Void)?
     
     init(hostName: String) {
