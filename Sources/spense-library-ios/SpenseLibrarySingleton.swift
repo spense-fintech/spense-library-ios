@@ -7,7 +7,7 @@
 
 import Foundation
 
-@available(iOS 15.0, *)
+@available(iOS 16.0, *)
 public class SpenseLibrarySingleton {
     public static let shared = SpenseLibrarySingleton()
 

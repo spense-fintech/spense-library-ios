@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-@available(iOS 15.0, *)
+@available(iOS 16.0, *)
 struct SIMSelectionView: View {
     @Binding var selectedSIM: Int?
     @Binding var currentScreen: DeviceBindingWaitingView.Screen

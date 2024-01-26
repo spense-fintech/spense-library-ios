@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-@available(iOS 15.0, *)
+@available(iOS 16.0, *)
 struct DeviceBindingWaitingView: View {
     
     @State private var currentScreen: Screen = .waiting
@@ -23,7 +23,9 @@ struct DeviceBindingWaitingView: View {
         ZStack {
             switch currentScreen {
             case .waiting:
-                WaitingView(currentScreen: $currentScreen, isShowingMessageCompose: $isShowingMessageCompose, deviceAuthCode: $deviceAuthCode, deviceId: $deviceId, deviceBindingId: $deviceBindingId)
+//                WaitingView(currentScreen: $currentScreen, isShowingMessageCompose: $isShowingMessageCompose, deviceAuthCode: $deviceAuthCode, deviceId: $deviceId, deviceBindingId: $deviceBindingId)
+                
+                WaitingView()
             case .failure:
                 FailureView(currentScreen: $currentScreen)
             case .mpinsetup:
@@ -99,7 +101,7 @@ struct DeviceBindingWaitingView: View {
 }
 
 
-@available(iOS 15.0, *)
+@available(iOS 16.0, *)
 #Preview {
     DeviceBindingWaitingView(onSuccess: {
         print("Success DeviceBindingWaitingView")

@@ -8,7 +8,7 @@
 import UIKit
 import SwiftUI
 
-@available(iOS 15.0, *)
+@available(iOS 16.0, *)
 public class SpenseLibrary {
     
     public private(set) var hostName: String?

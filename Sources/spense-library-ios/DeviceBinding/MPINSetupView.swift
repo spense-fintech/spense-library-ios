@@ -70,7 +70,7 @@ struct MPINSetupView: View {
                 .background(Color(hex: 0x037EAB))
                 .cornerRadius(8)
         }
-        .padding(.top, 60)
+        .padding(.top, 48)
     }
     
     private func handleBackspace(at index: Int) {
@@ -145,7 +145,7 @@ struct MPINSetupView: View {
 
 @available(iOS 15.0, *)
 #Preview {
-    MPINSetupView(isMPINSet: false, onSuccess: {
+    MPINSetupView(isMPINSet: true, onSuccess: {
         print("Success")
     })
 }

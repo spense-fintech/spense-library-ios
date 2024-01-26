@@ -15,26 +15,19 @@ struct PinDigitView: View {
     
     var body: some View {
         TextField("", text: $digit)
+            .font(.system(size: 16, weight: .semibold))
             .multilineTextAlignment(.center)
             .keyboardType(.numberPad)
             .disableAutocorrection(true)
             .autocapitalization(.none)
             .frame(width: 48, height: 48)
             .background(Color(hex: 0xEBECEF))
-            .cornerRadius(48)
-            .padding(1)
-        //            .onReceive(digit.publisher.collect()) {
-        //                if $0.isEmpty && !previousDigit.isEmpty {
-        //                    onBackspace()
-        //                }
-        //                previousDigit = $0 // Update the previous digit
-        //                self.digit = String($0.prefix(1))
-        //            }
+            .cornerRadius(8)
             .onChange(of: digit) { newValue in
                 if newValue.isEmpty && !previousDigit.isEmpty {
                     onBackspace()
                 }
-                previousDigit = digit  // Update the previous digit
+                previousDigit = digit
             }
             .onReceive(digit.publisher.collect()) {
                 self.digit = String($0.prefix(1))
