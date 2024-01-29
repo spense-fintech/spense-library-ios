@@ -51,24 +51,29 @@ public class SpenseLibrary {
                     throw SpenseError.hostnameNotSet
                 }
                 print(hostName)
-                let checkProductsResponse = try await NetworkManager.shared.makeRequest(url: URL(string: "\(hostName)/api/banking/\(bank)/accounts/count")!, method: "GET")
-                if ((checkProductsResponse["count"] as! Int) < 1) {
-                    await MainActor.run {
-                        viewController.dismiss(animated: true, completion: completion)
-                    }
-                } else {
-                    let rootView = AnyView(BankingDetailsView(onSuccess: {
-                        Task {
-                            await MainActor.run {
-                                viewController.dismiss(animated: true, completion: completion)
-                            }
+                do {
+                    let checkProductsResponse = try await NetworkManager.shared.makeRequest(url: URL(string: "\(hostName)/api/banking/\(bank)/accounts/count")!, method: "GET")
+                    print(checkProductsResponse)
+                    if ((checkProductsResponse["count"] as! Int) < 1) {
+                        await MainActor.run {
+                            viewController.dismiss(animated: true, completion: completion)
                         }
-                    }))
-                    await MainActor.run {
-                        let hostingController = UIHostingController(rootView: rootView)
-                        hostingController.modalPresentationStyle = .fullScreen
-                        viewController.present(hostingController, animated: true, completion: nil)
+                    } else {
+                        let rootView = AnyView(BankingDetailsView(onSuccess: {
+                            Task {
+                                await MainActor.run {
+                                    viewController.dismiss(animated: true, completion: completion)
+                                }
+                            }
+                        }))
+                        await MainActor.run {
+                            let hostingController = UIHostingController(rootView: rootView)
+                            hostingController.modalPresentationStyle = .fullScreen
+                            viewController.present(hostingController, animated: true, completion: nil)
+                        }
                     }
+                } catch {
+                    print(error)
                 }
             }
         }
