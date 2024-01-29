@@ -46,9 +46,11 @@ public class SpenseLibrary {
         } else {
             Task {
                 let bank = "spense"
+                print(self.hostName!)
                 guard let hostName = self.hostName else {
                     throw SpenseError.hostnameNotSet
                 }
+                print(hostName)
                 let checkProductsResponse = try await NetworkManager.shared.makeRequest(url: URL(string: "\(hostName)/api/banking/\(bank)/accounts/count")!, method: "GET")
                 if ((checkProductsResponse["count"] as! Int) < 1) {
                     await MainActor.run {
