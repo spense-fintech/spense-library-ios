@@ -18,9 +18,10 @@ struct WaitingView: View {
     
     private func initiateDeviceBinding() async {
         do {
+            let bank = "spense"
             let parameters = await ["device_uuid": UIDevice.current.identifierForVendor?.uuidString ?? "", "device_binding_id": deviceBindingId, "manufacturer": "Apple", "model": UIDevice.modelName, "os": "iOS", "os_version": UIDevice.current.systemVersion, "app_version": PackageInfo.version] as [String : Any]
             print(parameters)
-            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/device/bind")!, method: "POST", jsonPayload: parameters)
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/device/\(bank)/bind")!, method: "POST", jsonPayload: parameters)
             print(response)
             if let authCode = response["device_auth"] as? String {
                 DispatchQueue.main.async {
