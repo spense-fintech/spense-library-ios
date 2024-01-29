@@ -33,20 +33,44 @@ public class SpenseLibrary {
     }
     
     public func bindDevice(on viewController: UIViewController, completion: @escaping () -> Void) {
-//        onMPINSetupSuccess = completion
+        //        onMPINSetupSuccess = completion
         let isMPINSet = !(SharedPreferenceManager.shared.getValue(forKey: "MPIN") ?? "").isEmpty
-        let rootView = isMPINSet
-        ? AnyView(MPINSetupView(isMPINSet: true, onSuccess: {
-            viewController.dismiss(animated: true, completion: completion)
-        }))
-        : AnyView(DeviceBindingWaitingView(onSuccess: {
-            viewController.dismiss(animated: true, completion: completion)
-        }))
-        
-        let hostingController = UIHostingController(rootView: rootView)
-        hostingController.modalPresentationStyle = .fullScreen
-        viewController.present(hostingController, animated: true, completion: nil)
-        
+        if (isMPINSet) {
+            let rootView = AnyView(MPINSetupView(isMPINSet: true, onSuccess: {
+                viewController.dismiss(animated: true, completion: completion)
+            }))
+            
+            let hostingController = UIHostingController(rootView: rootView)
+            hostingController.modalPresentationStyle = .fullScreen
+            viewController.present(hostingController, animated: true, completion: nil)
+        } else {
+            Task {
+                let bank = "spense"
+                let checkProductsResponse = try await NetworkManager.shared.makeRequest(url: URL(string: "\(hostName)/api/banking/\(bank)/accounts/count")!, method: "GET")
+                if ((checkProductsResponse["count"] as! Int) < 1) {
+                    await MainActor.run {
+                        viewController.dismiss(animated: true, completion: completion)
+                    }
+                } else {
+                    let rootView = AnyView(BankingDetailsView(onSuccess: {
+                        Task {
+                            await MainActor.run {
+                                viewController.dismiss(animated: true, completion: completion)
+                            }
+                        }
+                    }))
+                    await MainActor.run {
+                        let hostingController = UIHostingController(rootView: rootView)
+                        hostingController.modalPresentationStyle = .fullScreen
+                        viewController.present(hostingController, animated: true, completion: nil)
+                    }
+                }
+            }
+        }
+    }
+    
+    public func unbindDevice() {
+        SharedPreferenceManager.shared.setValue("", forKey: "MPIN")
     }
     
     public func open(on viewController: UIViewController, withSlug slug: String) {

@@ -6,15 +6,20 @@
 //
 
 import SwiftUI
+import LocalAuthentication
 
 @available(iOS 15.0, *)
 struct MPINSetupView: View {
     @State private var pinDigits: [String] = Array(repeating: "", count: 4)
-    @State var isMPINSet: Bool // You should set this based on your app logic
+    @State var isMPINSet: Bool
     @State private var otpEntered = 0
     @State private var mPIN = ""// Adjust this based on your logic
     @FocusState private var focusedField: Int?
     @State private var showAlert = false
+    let context = LAContext()
+    @State private var alertMessage = ""
+    @State private var showingAlert = false
+    
     var onSuccess: () -> Void
     
     var body: some View {
@@ -36,7 +41,47 @@ struct MPINSetupView: View {
                     }
                     Spacer()
                 }
+                if isMPINSet {
+                    HStack {
+                        Spacer()
+                        Text("Forgot Mpin?")
+                            .font(.footnote)
+                        Button(action:  {
+                            
+                        }) {
+                            Text("Change Mpin")
+                                .font(.footnote)
+                                .foregroundColor(Color(hex: 0x037EAB))
+                        }
+                        Spacer()
+                    }.padding(.top, 24)
+                }
                 continueButton
+                if isMPINSet {
+                    if isFaceIDAvailable() {
+                        HStack {
+                            Rectangle().frame(width: .infinity, height: 1)
+                                .opacity(0.3)
+                            Text("or")
+                                .font(.caption2)
+                                .foregroundStyle(Color(hex: 0x9E9E9E))
+                            Rectangle().frame(width: .infinity, height: 1)
+                                .opacity(0.3)
+                        }.padding(.top, 24)
+                        HStack {
+                            Spacer()
+                            Button(action:  {
+                                
+                            }) {
+                                Text("Use Face ID").font(.footnote)
+                                    .foregroundStyle(Color(hex: 0x666666))
+                                Image(systemName: "faceid")
+                                    .foregroundStyle(Color(hex: 0x037EAB))
+                            }
+                            Spacer()
+                        }.padding(.top)
+                    }
+                }
                 Spacer()
             }
             .padding(.horizontal, 16)
@@ -46,6 +91,9 @@ struct MPINSetupView: View {
             }
         }.alert(isPresented: $showAlert) {
             wrongPinAlert()
+        }
+        .alert(isPresented: $showingAlert) {
+            Alert(title: Text("Authentication Error"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
     }
     
@@ -70,7 +118,7 @@ struct MPINSetupView: View {
                 .background(Color(hex: 0x037EAB))
                 .cornerRadius(8)
         }
-        .padding(.top, 48)
+        .padding(.top, 24)
     }
     
     private func handleBackspace(at index: Int) {
@@ -78,6 +126,33 @@ struct MPINSetupView: View {
             pinDigits[index - 1] = ""
             focusedField = index - 1
         }
+    }
+    
+    private func isFaceIDAvailable() -> Bool {
+        var error: NSError?
+        
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
+            return true
+        }
+        return true
+    }
+    
+    private func authenticateUser() {
+        
+        let reason = "We need to unlock your data."
+        
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
+            DispatchQueue.main.async {
+                if success {
+                    onSuccess()
+                } else {
+                    // There was a problem
+                    self.alertMessage = "There was a problem authenticating you."
+                    self.showingAlert = true
+                }
+            }
+        }
+        
     }
     
     private func continueButtonAction() {
