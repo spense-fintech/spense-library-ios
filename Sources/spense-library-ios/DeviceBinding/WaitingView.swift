@@ -10,32 +10,32 @@ import SwiftUI
 @available(iOS 16.0, *)
 struct WaitingView: View {
     @Environment(\.presentationMode) var presentationMode
-//    @Binding var currentScreen: DeviceBindingWaitingView.Screen
-//    @Binding var isShowingMessageCompose: Bool
-//    @Binding var deviceAuthCode: String
-//    @Binding var deviceId: Int
-//    @Binding var deviceBindingId: String
-//    
-//    private func initiateDeviceBinding() async {
-//        do {
-//            let parameters = await ["device_uuid": UIDevice.current.identifierForVendor?.uuidString ?? "", "device_binding_id": deviceBindingId, "manufacturer": "Apple", "model": UIDevice.modelName, "os": "iOS", "os_version": UIDevice.current.systemVersion, "app_version": PackageInfo.version] as [String : Any]
-//            print(parameters)
-//            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/device/bind")!, method: "POST", jsonPayload: parameters)
-//            print(response)
-//            if let authCode = response["device_auth"] as? String {
-//                DispatchQueue.main.async {
-//                    self.deviceAuthCode = authCode
-//                    self.deviceId = response["device_id"] as! Int
-//                    self.isShowingMessageCompose = true
-//                }
-//            } else {
-//                currentScreen = .failure
-//            }
-//        } catch {
-//            print(error)
-//            currentScreen = .failure
-//        }
-//    }
+    @Binding var currentScreen: DeviceBindingWaitingView.Screen
+    @Binding var isShowingMessageCompose: Bool
+    @Binding var deviceAuthCode: String
+    @Binding var deviceId: Int
+    @Binding var deviceBindingId: String
+    
+    private func initiateDeviceBinding() async {
+        do {
+            let parameters = await ["device_uuid": UIDevice.current.identifierForVendor?.uuidString ?? "", "device_binding_id": deviceBindingId, "manufacturer": "Apple", "model": UIDevice.modelName, "os": "iOS", "os_version": UIDevice.current.systemVersion, "app_version": PackageInfo.version] as [String : Any]
+            print(parameters)
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/device/bind")!, method: "POST", jsonPayload: parameters)
+            print(response)
+            if let authCode = response["device_auth"] as? String {
+                DispatchQueue.main.async {
+                    self.deviceAuthCode = authCode
+                    self.deviceId = response["device_id"] as! Int
+                    self.isShowingMessageCompose = true
+                }
+            } else {
+                currentScreen = .failure
+            }
+        } catch {
+            print(error)
+            currentScreen = .failure
+        }
+    }
     
     var body: some View {
         NavigationView {
@@ -83,7 +83,7 @@ struct WaitingView: View {
                     
                     Button(action: {
                         Task {
-//                            await initiateDeviceBinding()
+                            await initiateDeviceBinding()
                         }
                     }) {
                         Text("Continue").font(.headline)
@@ -102,7 +102,7 @@ struct WaitingView: View {
     }
 }
 
-@available(iOS 16.0, *)
-#Preview {
-    WaitingView()
-}
+//@available(iOS 16.0, *)
+//#Preview {
+//    WaitingView()
+//}
