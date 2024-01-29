@@ -23,9 +23,7 @@ struct DeviceBindingWaitingView: View {
         ZStack {
             switch currentScreen {
             case .waiting:
-//                WaitingView(currentScreen: $currentScreen, isShowingMessageCompose: $isShowingMessageCompose, deviceAuthCode: $deviceAuthCode, deviceId: $deviceId, deviceBindingId: $deviceBindingId)
-//                
-                WaitingView()
+                WaitingView(currentScreen: $currentScreen, isShowingMessageCompose: $isShowingMessageCompose, deviceAuthCode: $deviceAuthCode, deviceId: $deviceId, deviceBindingId: $deviceBindingId)
             case .failure:
                 FailureView(currentScreen: $currentScreen)
             case .mpinsetup:

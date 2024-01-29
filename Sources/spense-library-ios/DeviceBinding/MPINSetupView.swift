@@ -134,7 +134,7 @@ struct MPINSetupView: View {
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
             return true
         }
-        return true
+        return false
     }
     
     private func authenticateUser() {
