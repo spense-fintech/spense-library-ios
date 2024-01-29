@@ -19,6 +19,7 @@ struct MPINSetupView: View {
     let context = LAContext()
     @State private var alertMessage = ""
     @State private var showingAlert = false
+    @Environment(\.presentationMode) var presentationMode
     
     var onSuccess: () -> Void
     var onReset: () -> Void
@@ -49,6 +50,7 @@ struct MPINSetupView: View {
                             .font(.footnote)
                         Button(action:  {
                             SpenseLibrarySingleton.shared.instance.unbindDevice()
+                            self.presentationMode.wrappedValue.dismiss()
                             onReset()
                         }) {
                             Text("Change Mpin")
@@ -135,7 +137,7 @@ struct MPINSetupView: View {
             print(pinTime)
             
         } catch {
-            
+            print(error)
         }
     }
     
