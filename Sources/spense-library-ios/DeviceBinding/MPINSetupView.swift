@@ -8,7 +8,7 @@
 import SwiftUI
 import LocalAuthentication
 
-@available(iOS 15.0, *)
+@available(iOS 16.0, *)
 struct MPINSetupView: View {
     @State private var pinDigits: [String] = Array(repeating: "", count: 4)
     @State var isMPINSet: Bool
@@ -21,6 +21,7 @@ struct MPINSetupView: View {
     @State private var showingAlert = false
     
     var onSuccess: () -> Void
+    var onReset: () -> Void
     
     var body: some View {
         GeometryReader { geometry in
@@ -47,7 +48,8 @@ struct MPINSetupView: View {
                         Text("Forgot Mpin?")
                             .font(.footnote)
                         Button(action:  {
-                            
+                            SpenseLibrarySingleton.shared.instance.unbindDevice()
+                            onReset()
                         }) {
                             Text("Change Mpin")
                                 .font(.footnote)
@@ -71,7 +73,7 @@ struct MPINSetupView: View {
                         HStack {
                             Spacer()
                             Button(action:  {
-                                
+                                authenticateUser()
                             }) {
                                 Text("Use Face ID").font(.footnote)
                                     .foregroundStyle(Color(hex: 0x666666))
@@ -217,10 +219,10 @@ struct MPINSetupView: View {
         )
     }
 }
-
-@available(iOS 15.0, *)
-#Preview {
-    MPINSetupView(isMPINSet: true, onSuccess: {
-        print("Success")
-    })
-}
+//
+//@available(iOS 16.0, *)
+//#Preview {
+//    MPINSetupView(isMPINSet: true, onSuccess: {
+//        print("Success")
+//    })
+//}

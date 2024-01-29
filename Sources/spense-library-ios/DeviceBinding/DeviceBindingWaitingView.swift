@@ -18,6 +18,7 @@ struct DeviceBindingWaitingView: View {
     @State private var pollingCounter = 0
     @State private var deviceBindingId = UUID().uuidString
     var onSuccess: () -> Void
+    var onReset: () -> Void
     
     var body: some View {
         ZStack {
@@ -27,7 +28,7 @@ struct DeviceBindingWaitingView: View {
             case .failure:
                 FailureView(currentScreen: $currentScreen)
             case .mpinsetup:
-                MPINSetupView(isMPINSet: false, onSuccess: onSuccess)
+                MPINSetupView(isMPINSet: false, onSuccess: onSuccess, onReset: onReset)
             }
         }
         .onChange(of: deviceAuthCode) { newValue in
@@ -103,5 +104,7 @@ struct DeviceBindingWaitingView: View {
 #Preview {
     DeviceBindingWaitingView(onSuccess: {
         print("Success DeviceBindingWaitingView")
+    }, onReset: {
+        print("Reset DeviceBindingWaitingView")
     })
 }

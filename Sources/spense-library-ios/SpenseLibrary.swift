@@ -38,6 +38,8 @@ public class SpenseLibrary {
         if (isMPINSet) {
             let rootView = AnyView(MPINSetupView(isMPINSet: true, onSuccess: {
                 viewController.dismiss(animated: true, completion: completion)
+            }, onReset: {
+                self.bindDevice(on: viewController, completion: completion)
             }))
             
             let hostingController = UIHostingController(rootView: rootView)

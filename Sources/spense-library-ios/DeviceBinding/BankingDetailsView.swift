@@ -74,7 +74,9 @@ struct BankingDetailsView: View {
                         .padding(.horizontal)
                     
                     
-                    NavigationLink(destination: DeviceBindingWaitingView(onSuccess: onSuccess), isActive: $navigateToDeviceBinding) {
+                    NavigationLink(destination: DeviceBindingWaitingView(onSuccess: onSuccess, onReset: {
+                        print("reset cif entry page")
+                    }), isActive: $navigateToDeviceBinding) {
                         Button(action: {
                             Task {
                                 let isoFormatter = ISO8601DateFormatter()
