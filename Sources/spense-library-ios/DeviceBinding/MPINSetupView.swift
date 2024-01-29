@@ -25,7 +25,10 @@ struct MPINSetupView: View {
     var onReset: () -> Void
     
     var body: some View {
-        GeometryReader { geometry in
+        Task {
+            await getServerTime()
+        }
+        return GeometryReader { geometry in
             VStack(alignment: .leading) {
                 headerView
                 HStack{
@@ -92,9 +95,6 @@ struct MPINSetupView: View {
             .padding(.top, 16)
             .onAppear {
                 focusedField = 0
-                Task {
-                    await getServerTime()
-                }
             }
         }.alert(isPresented: $showAlert) {
             wrongPinAlert()
@@ -131,11 +131,11 @@ struct MPINSetupView: View {
     private func getServerTime() async {
         do {
             let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/global/time")!, method: "GET")
-            let serverTime = response["time"] as! Int16
-            let pinTime = SharedPreferenceManager.shared.getValue(forKey: "MPIN_TIME")
-            print(serverTime)
-            print(pinTime)
-            
+            print(response)
+                        let serverTime = response["time"] as! NSNumber
+                        let pinTime = SharedPreferenceManager.shared.getValue(forKey: "MPIN_TIME")
+                        print(serverTime)
+                        print(pinTime)
         } catch {
             print(error)
         }
