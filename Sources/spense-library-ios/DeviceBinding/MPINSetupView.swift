@@ -25,10 +25,7 @@ struct MPINSetupView: View {
     var onReset: () -> Void
     
     var body: some View {
-        Task {
-            await getServerTime()
-        }
-        return GeometryReader { geometry in
+        GeometryReader { geometry in
             VStack(alignment: .leading) {
                 headerView
                 HStack{
@@ -95,6 +92,9 @@ struct MPINSetupView: View {
             .padding(.top, 16)
             .onAppear {
                 focusedField = 0
+                Task {
+                    await getServerTime()
+                }
             }
         }.alert(isPresented: $showAlert) {
             wrongPinAlert()
@@ -132,10 +132,10 @@ struct MPINSetupView: View {
         do {
             let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/global/time")!, method: "GET")
             print(response)
-                        let serverTime = response["time"] as! NSNumber
-                        let pinTime = SharedPreferenceManager.shared.getValue(forKey: "MPIN_TIME")
-                        print(serverTime)
-                        print(pinTime)
+            let serverTime = response["time"] as! NSNumber
+            let pinTime = SharedPreferenceManager.shared.getValue(forKey: "MPIN_TIME")
+            print(serverTime)
+            print(pinTime)
         } catch {
             print(error)
         }
@@ -158,15 +158,12 @@ struct MPINSetupView: View {
     }
     
     private func authenticateUser() {
-        
         let reason = "We need to unlock your data."
-        
         context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
             DispatchQueue.main.async {
                 if success {
                     onSuccess()
                 } else {
-                    // There was a problem
                     self.alertMessage = "There was a problem authenticating you."
                     self.showingAlert = true
                 }
@@ -219,8 +216,8 @@ struct MPINSetupView: View {
     
     private func handleConfirmedMPIN(_ mPIN: String) {
         SharedPreferenceManager.shared.setValue(mPIN, forKey: "MPIN")
-        print("currentTime \(String(Date().timeIntervalSince1970))")
-        SharedPreferenceManager.shared.setValue(String(Date().timeIntervalSince1970), forKey: "MPIN_TIME")
+        print("currentTime \(String((Date().timeIntervalSince1970)*1000))")
+        SharedPreferenceManager.shared.setValue(String((Date().timeIntervalSince1970)*1000), forKey: "MPIN_TIME")
         onSuccess()
     }
     
@@ -240,11 +237,11 @@ struct MPINSetupView: View {
     }
 }
 //
-@available(iOS 16.0, *)
-#Preview {
-    MPINSetupView(isMPINSet: true, onSuccess: {
-        print("Success")
-    }, onReset: {
-        print("Reset Success")
-    })
-}
+//@available(iOS 16.0, *)
+//#Preview {
+//    MPINSetupView(isMPINSet: true, onSuccess: {
+//        print("Success")
+//    }, onReset: {
+//        print("Reset Success")
+//    })
+//}
