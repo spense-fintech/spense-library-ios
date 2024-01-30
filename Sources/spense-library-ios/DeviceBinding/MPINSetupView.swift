@@ -16,11 +16,13 @@ struct MPINSetupView: View {
     @State private var mPIN = ""// Adjust this based on your logic
     @FocusState private var focusedField: Int?
     @State private var showAlert = false
-    let context = LAContext()
     @State private var alertMessage = ""
-    @State private var showAuthAlert = false
-    @State private var showSamePinAlert = false
+    @State private var alertTitle = ""
     @State private var resetPinFlow = false
+    @State private var isPinDisabled = false
+    @State private var wrongPinCount = 0
+    private let maxWrongAttempts = 3
+    private let context = LAContext()
     @Environment(\.presentationMode) var presentationMode
     
     var onSuccess: () -> Void
@@ -37,6 +39,7 @@ struct MPINSetupView: View {
                             handleBackspace(at: index)
                         }, index: index)
                         .focused($focusedField, equals: index)
+                        .disabled(isPinDisabled)
                         .onChange(of: pinDigits[index]) { newValue in
                             if newValue.count == 1 {
                                 focusedField = index < 3 ? index + 1 : nil
@@ -46,12 +49,26 @@ struct MPINSetupView: View {
                     Spacer()
                 }
                 if isMPINSet {
+                    if isPinDisabled {
+                        HStack {
+                            Spacer()
+                            Text("You have entered wrong Mpin 3 times. \nPlease try after 30 mins or change Mpin")
+                                .foregroundStyle(Color(hex: 0xB3261E))
+                                .font(.system(size: 14))
+                                .multilineTextAlignment(.center)
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                        .padding(.top)
+                        
+                    }
                     HStack {
                         Spacer()
                         Text("Forgot Mpin?")
                             .font(.footnote)
                         Button(action:  {
                             SpenseLibrarySingleton.shared.instance.unbindDevice()
+                            isPinDisabled = false
                             self.presentationMode.wrappedValue.dismiss()
                             onReset()
                         }) {
@@ -63,7 +80,7 @@ struct MPINSetupView: View {
                     }.padding(.top, 24)
                 }
                 continueButton
-                if isMPINSet {
+                if isMPINSet && !resetPinFlow {
                     if isFaceIDAvailable() {
                         HStack {
                             Rectangle().frame(width: .infinity, height: 1)
@@ -93,23 +110,21 @@ struct MPINSetupView: View {
             .padding(.horizontal, 16)
             .padding(.top, 16)
             .onAppear {
-                focusedField = 0
+                if isPinDisabled {
+                    focusedField = nil
+                } else {
+                    focusedField = 0
+                }
                 Task {
                     await getServerTime()
                 }
             }
         }.alert(isPresented: $showAlert) {
-            wrongPinAlert()
-        }
-        .alert(isPresented: $showSamePinAlert) {
             Alert(
-                title: Text("Same PIN"),
-                message: Text("New pin can't be same as the old pin"),
+                title: Text(alertTitle),
+                message: Text(alertMessage),
                 dismissButton: .default(Text("OK"))
             )
-        }
-        .alert(isPresented: $showAuthAlert) {
-            Alert(title: Text("Authentication Error"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
     }
     
@@ -168,13 +183,19 @@ struct MPINSetupView: View {
     private func getServerTime() async {
         do {
             let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/global/time")!, method: "GET")
-            print(response)
             let serverTime = response["time"] as! NSNumber
             let mpinTime = Int(Double(SharedPreferenceManager.shared.getValue(forKey: "MPIN_TIME") ?? String(describing: serverTime)) ?? Double(serverTime))
-            print(serverTime)
-            print(mpinTime)
-            if (Int(serverTime) - mpinTime >= 1) {
+            if (abs(Int(serverTime) - mpinTime) >= 7776000000) {
                 resetPinFlow = true
+            }
+            
+            let mpinDisabledTime = Int(Double(SharedPreferenceManager.shared.getValue(forKey: "MPIN_DISABLED_TIME") ?? String(describing: (Int(serverTime)*10))) ?? Double(Int(serverTime)*10))
+            print(mpinDisabledTime)
+            if (abs(Int(serverTime) - mpinDisabledTime) < 1800000) {
+                isPinDisabled = true
+            } else {
+                isPinDisabled = false
+                SharedPreferenceManager.shared.setValue("", forKey: "MPIN_DISABLED_TIME")
             }
         } catch {
             print(error)
@@ -203,9 +224,10 @@ struct MPINSetupView: View {
             DispatchQueue.main.async {
                 if success {
                     onSuccess()
+                    wrongPinCount = 0
                 } else {
                     self.alertMessage = "There was a problem authenticating you."
-                    self.showAuthAlert = true
+                    presentAlert(withTitle: "Authentication Error", withMessage: "There was a problem authenticating you.")
                 }
             }
         }
@@ -221,13 +243,13 @@ struct MPINSetupView: View {
                     otpEntered += 1
                     resetPinFields()
                 } else {
-                    showWrongPinAlert()
+                    presentAlert(withTitle: "Incorrect PIN", withMessage: "Please check the MPIN you entered")
                 }
             } else if otpEntered == 1 {
-                mPIN = enteredPin
-                if mPIN == savedPin {
-                    presentSamePinAlert()
+                if enteredPin == savedPin {
+                    presentAlert(withTitle: "Same MPIN", withMessage: "New MPIN can't be same as the old pin")
                 } else {
+                    mPIN = enteredPin
                     otpEntered += 1
                     resetPinFields()
                 }
@@ -237,7 +259,7 @@ struct MPINSetupView: View {
                     handleConfirmedMPIN(mPIN)
                 } else {
                     // Handle mismatch
-                    showWrongPinAlert()
+                    presentAlert(withTitle: "Incorrect PIN", withMessage: "Please check the MPIN you entered")
                     resetPinFields()
                 }
             }
@@ -259,7 +281,7 @@ struct MPINSetupView: View {
                     handleConfirmedMPIN(mPIN)
                 } else {
                     // Handle mismatch
-                    showWrongPinAlert()
+                    presentAlert(withTitle: "Incorrect PIN", withMessage: "Please check the MPIN you entered")
                     resetPinFields()
                 }
             }
@@ -274,42 +296,35 @@ struct MPINSetupView: View {
     }
     
     private func verifyPin(_ enteredPin: String) {
-        // Add logic to verify the MPIN
         let savedPin = SharedPreferenceManager.shared.getValue(forKey: "MPIN") ?? ""
         if enteredPin == savedPin {
             onSuccess()
+            wrongPinCount = 0
         } else {
-            showWrongPinAlert()
+            resetPinFields()
+            wrongPinCount += 1
+            if wrongPinCount >= maxWrongAttempts {
+                isPinDisabled = true
+                SharedPreferenceManager.shared.setValue(String((Date().timeIntervalSince1970)*1000), forKey: "MPIN_DISABLED_TIME")
+            } else {
+                presentAlert(withTitle: "Incorrect PIN", withMessage: "Please check the MPIN you entered")
+            }
         }
     }
     
     private func handleConfirmedMPIN(_ mPIN: String) {
         SharedPreferenceManager.shared.setValue(mPIN, forKey: "MPIN")
-        print("currentTime \(String((Date().timeIntervalSince1970)*1000))")
         SharedPreferenceManager.shared.setValue(String((Date().timeIntervalSince1970)*1000), forKey: "MPIN_TIME")
         onSuccess()
     }
     
-    private func showWrongPinAlert() {
+    private func presentAlert(withTitle title: String, withMessage message: String) {
         showAlert = true
+        alertTitle = title
+        alertMessage = message
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             showAlert = false
         }
-    }
-    
-    private func presentSamePinAlert() {
-        showSamePinAlert = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            showSamePinAlert = false
-        }
-    }
-    
-    private func wrongPinAlert() -> Alert {
-        Alert(
-            title: Text("Incorrect PIN"),
-            message: Text("Please check the MPIN you entered"),
-            dismissButton: .default(Text("OK"))
-        )
     }
 }
 //

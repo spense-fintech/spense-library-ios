@@ -83,6 +83,8 @@ public class SpenseLibrary {
     
     public func unbindDevice() {
         SharedPreferenceManager.shared.setValue("", forKey: "MPIN")
+        SharedPreferenceManager.shared.setValue("", forKey: "MPIN_TIME")
+        SharedPreferenceManager.shared.setValue("", forKey: "MPIN_DISABLED_TIME")
     }
     
     public func open(on viewController: UIViewController, withSlug slug: String) {
