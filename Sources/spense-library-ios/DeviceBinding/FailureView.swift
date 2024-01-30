@@ -28,7 +28,7 @@ struct FailureView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.gray.opacity(0.6))
+        .background(Color(hex: 0xF5F5F5))
     }
 }
 

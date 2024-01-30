@@ -190,7 +190,6 @@ struct MPINSetupView: View {
             }
             
             let mpinDisabledTime = Int(Double(SharedPreferenceManager.shared.getValue(forKey: "MPIN_DISABLED_TIME") ?? String(describing: (Int(serverTime)*10))) ?? Double(Int(serverTime)*10))
-            print(mpinDisabledTime)
             if (abs(Int(serverTime) - mpinDisabledTime) < 1800000) {
                 isPinDisabled = true
             } else {

@@ -15,6 +15,7 @@ struct WaitingView: View {
     @Binding var deviceAuthCode: String
     @Binding var deviceId: Int
     @Binding var deviceBindingId: String
+    @State private var isLoading = false
     
     private func initiateDeviceBinding() async {
         do {
@@ -22,7 +23,7 @@ struct WaitingView: View {
             let parameters = await ["device_uuid": UIDevice.current.identifierForVendor?.uuidString ?? "", "device_binding_id": deviceBindingId, "manufacturer": "Apple", "model": UIDevice.modelName, "os": "iOS", "os_version": UIDevice.current.systemVersion, "app_version": PackageInfo.version] as [String : Any]
             print(parameters)
             let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/device/\(bank)/bind")!, method: "POST", jsonPayload: parameters)
-            print(response)
+            isLoading = false
             if let authCode = response["device_auth"] as? String {
                 DispatchQueue.main.async {
                     self.deviceAuthCode = authCode
@@ -34,6 +35,7 @@ struct WaitingView: View {
             }
         } catch {
             print(error)
+            isLoading = false
             currentScreen = .failure
         }
     }
@@ -100,6 +102,7 @@ struct WaitingView: View {
             }.background(Color(hex: 0xF5F5F5))
         }.navigationBarBackButtonHidden(true)
             .toolbar(.hidden)
+            .loader(isLoading: $isLoading)
     }
 }
 //

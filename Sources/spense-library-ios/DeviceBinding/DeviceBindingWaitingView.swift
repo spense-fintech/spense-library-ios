@@ -19,6 +19,7 @@ struct DeviceBindingWaitingView: View {
     @State private var deviceBindingId = UUID().uuidString
     var onSuccess: () -> Void
     var onReset: () -> Void
+    @State private var isLoading = false
     
     var body: some View {
         ZStack {
@@ -39,9 +40,11 @@ struct DeviceBindingWaitingView: View {
         .sheet(isPresented: $isShowingMessageCompose, onDismiss: startPolling) {
             MessageComposeView(recipients: ["9220592205"], body: "CGFWT \(deviceAuthCode)")
         }
+        .loader(isLoading: $isLoading)
     }
     
     private func startPolling() {
+        isLoading = true
         pollingCounter = 0
         timer?.invalidate() // Invalidate any existing timer
         timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
@@ -65,6 +68,7 @@ struct DeviceBindingWaitingView: View {
             let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/device/\(bank)/binding/status/\(UIDevice.current.identifierForVendor?.uuidString ?? "")")!, method: "GET")
             if response["status"] as? String == "SUCCESS" {
                 timer?.invalidate()
+                isLoading = false
                 SharedPreferenceManager.shared.setValue(deviceBindingId, forKey: "device_binding_id")
                 DispatchQueue.main.async {
                     currentScreen = .mpinsetup // Navigate to success view
@@ -91,8 +95,10 @@ struct DeviceBindingWaitingView: View {
             let bank = "spense"
             let parameters = ["device_id": deviceId] as [String : Any]
             let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/device/\(bank)/bind")!, method: "PUT", jsonPayload: parameters)
+            isLoading = false
         } catch {
             print(error)
+            isLoading = false
         }
     }
     
