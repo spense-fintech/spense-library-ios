@@ -182,7 +182,7 @@ struct MPINSetupView: View {
     
     private func getServerTime() async {
         do {
-            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/global/time")!, method: "GET")
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: ServiceNames.TIME)!, method: "GET")
             let serverTime = response["time"] as! NSNumber
             let mpinTime = Int(Double(SharedPreferenceManager.shared.getValue(forKey: "MPIN_TIME") ?? String(describing: serverTime)) ?? Double(serverTime))
             if (abs(Int(serverTime) - mpinTime) >= 7776000000) {

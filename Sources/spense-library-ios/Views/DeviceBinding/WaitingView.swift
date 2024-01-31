@@ -19,10 +19,9 @@ struct WaitingView: View {
     
     private func initiateDeviceBinding() async {
         do {
-            let bank = "spense"
+            let partner = "spense"
             let parameters = await ["device_uuid": UIDevice.current.identifierForVendor?.uuidString ?? "", "device_binding_id": deviceBindingId, "manufacturer": "Apple", "model": UIDevice.modelName, "os": "iOS", "os_version": UIDevice.current.systemVersion, "app_version": PackageInfo.version] as [String : Any]
-            print(parameters)
-            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/device/\(bank)/bind")!, method: "POST", jsonPayload: parameters)
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: ServiceNames.DEVICE_BIND.dynamicParams(with: ["partner": partner]))!, method: "POST", jsonPayload: parameters)
             isLoading = false
             if let authCode = response["device_auth"] as? String {
                 DispatchQueue.main.async {

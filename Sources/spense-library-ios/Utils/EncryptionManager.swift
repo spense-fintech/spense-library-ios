@@ -124,7 +124,7 @@ struct EncryptionManager {
     }
     
     private static func fetchPublicKeyResponse() async throws -> [String: [String: String]] {
-        let (data, _) = try await URLSession.shared.data(from: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/network/keys")!)
+        let (data, _) = try await URLSession.shared.data(from: URL(string: ServiceNames.NETWORK_KEYS)!)
         
         guard let response = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: [String: String]] else {
             throw NetworkError.invalidPublicKey

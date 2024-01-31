@@ -65,7 +65,7 @@ struct DeviceBindingWaitingView: View {
     private func checkDeviceBindingStatus() async {
         do {
             let bank = "spense"
-            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/device/\(bank)/binding/status/\(UIDevice.current.identifierForVendor?.uuidString ?? "")")!, method: "GET")
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(ServiceNames.DEVICE_BINDING_STATUS)/\(UIDevice.current.identifierForVendor?.uuidString ?? "")")!, method: "GET")
             if response["status"] as? String == "SUCCESS" {
                 timer?.invalidate()
                 isLoading = false
@@ -92,9 +92,9 @@ struct DeviceBindingWaitingView: View {
     
     private func failDeviceBinding() async {
         do {
-            let bank = "spense"
+            let partner = "spense"
             let parameters = ["device_id": deviceId] as [String : Any]
-            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/device/\(bank)/bind")!, method: "PUT", jsonPayload: parameters)
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: ServiceNames.DEVICE_BIND.dynamicParams(with: ["partner": partner]))!, method: "PUT", jsonPayload: parameters)
             isLoading = false
         } catch {
             print(error)
