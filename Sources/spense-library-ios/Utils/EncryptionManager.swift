@@ -7,7 +7,7 @@
 
 import CryptoKit
 import Foundation
-import SwiftyRSA
+import Security
 
 @available(iOS 16.0, *)
 struct EncryptionManager {
@@ -21,6 +21,7 @@ struct EncryptionManager {
         
         do {
             let sealedBox = try AES.GCM.seal(dataToEncrypt, using: key, nonce: iv)
+            // Prepend IV to the ciphertext only (ignoring the tag)
             return iv + sealedBox.ciphertext
         } catch {
             print("Encryption error: \(error)")
@@ -29,14 +30,19 @@ struct EncryptionManager {
     }
     
     static func decryptAES(encryptedData: Data, key: SymmetricKey) -> String? {
-        guard encryptedData.count > 12 else { return nil }
+        guard encryptedData.count > 12 else {
+            print("Decryption error: Data too short")
+            return nil
+        }
+
+        let iv = encryptedData.prefix(12)
+        let ciphertext = encryptedData.dropFirst(12)
+
+        print("Nonce size: \(iv.count), Ciphertext size: \(ciphertext.count)")
+
         do {
-            let iv = try AES.GCM.Nonce(data: encryptedData.prefix(12))
-            let ciphertext = encryptedData.dropFirst(12)
-            
-            
-            let sealedBox = try AES.GCM.SealedBox(nonce: iv, ciphertext: ciphertext, tag: Data()) // Include an empty tag
-            
+            let nonce = try AES.GCM.Nonce(data: iv)
+            let sealedBox = try AES.GCM.SealedBox(nonce: nonce, ciphertext: ciphertext, tag: Data())
             let decryptedData = try AES.GCM.open(sealedBox, using: key)
             return String(data: decryptedData, encoding: .utf8)
         } catch {
@@ -44,30 +50,56 @@ struct EncryptionManager {
             return nil
         }
     }
+
+
     
     static func encryptRSA(base64EncodedString: String, publicKey: SecKey) -> String? {
-        do {
-            let publicKey = try PublicKey(reference: publicKey)
-
-            // Convert the base64 encoded string to Data
-            guard let data = Data(base64Encoded: base64EncodedString) else { return nil }
-
-            // Create Clear object
-            let clear = ClearMessage(data: data)
-
-            // Encrypt using OAEP SHA-256
-            let encrypted = try clear.encrypted(with: publicKey, padding: .OAEP)
-
-            // Return base64 encoded encrypted string
-            return encrypted.base64String
-        } catch {
-            print("Encryption error: \(error)")
+        guard let dataToEncrypt = Data(base64Encoded: base64EncodedString) else { return nil }
+        
+        let algorithm: SecKeyAlgorithm = .rsaEncryptionOAEPSHA256
+        guard SecKeyIsAlgorithmSupported(publicKey, .encrypt, algorithm) else {
+            print("Algorithm not supported.")
             return nil
         }
+        
+        var error: Unmanaged<CFError>?
+        guard let cipherText = SecKeyCreateEncryptedData(publicKey, algorithm, dataToEncrypt as CFData, &error) else {
+            if let error = error?.takeRetainedValue() {
+                print("Encryption error: \(error)")
+            }
+            return nil
+        }
+        
+        return (cipherText as Data).base64EncodedString()
+    }
+    
+    static func decryptRSA(base64EncodedString: String, privateKey: SecKey) -> String? {
+        guard let dataToDecrypt = Data(base64Encoded: base64EncodedString) else {
+            print("Failed to decode base64 string")
+            return nil
+        }
+        
+        let algorithm: SecKeyAlgorithm = .rsaEncryptionOAEPSHA256
+        guard SecKeyIsAlgorithmSupported(privateKey, .decrypt, algorithm) else {
+            print("Algorithm not supported.")
+            return nil
+        }
+        
+        var error: Unmanaged<CFError>?
+        guard let clearText = SecKeyCreateDecryptedData(privateKey, algorithm, dataToDecrypt as CFData, &error) else {
+            if let error = error?.takeRetainedValue() {
+                print("Decryption error: \(error)")
+            }
+            return nil
+        }
+        
+        return String(data: clearText as Data, encoding: .utf8)
     }
     
     static func getPublicKeyAndKid() async throws -> (SecKey, String) {
         let (publicKeyString, kid) = try await getPublicKeyAndKidString()
+        
+        print(publicKeyString, kid)
         
         let publicKey = try convertPEMStringToSecKey(publicKeyString)
         return (publicKey, kid)
@@ -93,7 +125,6 @@ struct EncryptionManager {
     
     private static func fetchPublicKeyResponse() async throws -> [String: [String: String]] {
         let (data, _) = try await URLSession.shared.data(from: URL(string: "\(SpenseLibrarySingleton.shared.instance.hostName ?? "https://partner.uat.spense.money")/api/network/keys")!)
-        print(data)
         
         guard let response = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: [String: String]] else {
             throw NetworkError.invalidPublicKey
@@ -101,7 +132,7 @@ struct EncryptionManager {
         return response
     }
     
-    private static func convertPEMStringToSecKey(_ pemString: String) throws -> SecKey {
+    static func convertPEMStringToSecKey(_ pemString: String) throws -> SecKey {
         let base64String = pemString
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "-----BEGIN PUBLIC KEY-----", with: "")
@@ -119,6 +150,29 @@ struct EncryptionManager {
         
         guard let secKey = SecKeyCreateWithData(data as CFData, options as CFDictionary, nil) else {
             throw NetworkError.invalidPublicKey
+        }
+        
+        return secKey
+    }
+    
+    static func convertPrivatePEMStringToSecKey(_ pemString: String) throws -> SecKey {
+        let base64String = pemString
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "-----BEGIN PRIVATE KEY-----", with: "")
+            .replacingOccurrences(of: "-----END PRIVATE KEY-----", with: "")
+            .replacingOccurrences(of: "\n", with: "")
+        
+        guard let data = Data(base64Encoded: base64String) else {
+            throw NetworkError.invalidPrivateKey
+        }
+        
+        let options: [String: Any] = [
+            kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
+            kSecAttrKeyClass as String: kSecAttrKeyClassPrivate
+        ]
+        
+        guard let secKey = SecKeyCreateWithData(data as CFData, options as CFDictionary, nil) else {
+            throw NetworkError.invalidPrivateKey
         }
         
         return secKey

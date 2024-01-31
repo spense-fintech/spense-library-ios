@@ -20,19 +20,19 @@ public class NetworkManager {
     }()
     
     public func makeRequest(url: URL, method: String, headers: [String: String]? = nil, jsonPayload: [String: Any]? = nil) async throws -> [String: Any] {
-        let encrypted = true
+        let encrypted = false
         if encrypted {
             return try await makeEncryptedRequest(url: url, method: method, headers: headers, jsonPayload: jsonPayload)
         }
-        return try await makeRawRequest(url: url, method: method, headers: headers, jsonPayload: jsonPayload)
+        return try await makeRawRequest(url: url, method: method, headers: headers!, jsonPayload: jsonPayload)
     }
     
-    public func makeRawRequest(url: URL, method: String, headers: [String: String]? = nil, jsonPayload: [String: Any]? = nil) async throws -> [String: Any] {
+    public func makeRawRequest(url: URL, method: String, headers: [String: String], jsonPayload: [String: Any]? = nil) async throws -> [String: Any] {
         var request = URLRequest(url: url)
         request.httpMethod = method
         
         // Set headers if provided
-        headers?.forEach { key, value in
+        headers.forEach { key, value in
             request.addValue(value, forHTTPHeaderField: key)
         }
         
@@ -45,6 +45,8 @@ public class NetworkManager {
                 throw error
             }
         }
+        
+        print("Debug Headers: \(request.allHTTPHeaderFields)")
         
         let (data, _) = try await session.data(for: request)
         
@@ -68,7 +70,11 @@ public class NetworkManager {
             print("Debug: KID: \(kid)") // Debugging
 
             let aesKey = EncryptionManager.generateAESKey()
-            let aesKeyData = aesKey.withUnsafeBytes { Data($0) }
+//            let aesKeyData = aesKey.withUnsafeBytes { Data($0) }
+            let aesKeyData = Data(aesKey.withUnsafeBytes { bytes in
+                Array(bytes)
+            })
+
             print("Debug: AES Key Length: \(aesKeyData.count * 8) bits") // Debugging
 
             let base64EncodedAESKey = aesKeyData.base64EncodedString()
@@ -135,4 +141,5 @@ enum NetworkError: Error, Equatable {
     case invalidPublicKey
     case encryptionFailed
     case decryptionFailed
+    case invalidPrivateKey
 }

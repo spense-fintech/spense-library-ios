@@ -104,7 +104,7 @@ public class SpenseLibrary {
     public func test() async throws {
         do {
             let jsonPayload = ["hello": "world"]
-            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "https://partner.uat.spense.money/api/global/time")!, method: "GET")
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "https://5af5-106-51-17-35.ngrok-free.app/api/global/time")!, method: "GET")
             print(response)
         } catch {
             print("error \(error)")
