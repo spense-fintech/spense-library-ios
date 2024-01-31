@@ -100,6 +100,16 @@ public class SpenseLibrary {
         navVC.modalPresentationStyle = .fullScreen
         return navVC
     }
+    
+    public func test() async throws {
+        do {
+            let jsonPayload = ["hello": "world"]
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "https://partner.uat.spense.money/api/global/time")!, method: "GET")
+            print(response)
+        } catch {
+            print("error \(error)")
+        }
+    }
 }
 
 public enum SpenseError: Error {
