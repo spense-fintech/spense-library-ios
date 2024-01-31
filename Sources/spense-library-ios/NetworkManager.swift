@@ -24,15 +24,15 @@ public class NetworkManager {
         if encrypted {
             return try await makeEncryptedRequest(url: url, method: method, headers: headers, jsonPayload: jsonPayload)
         }
-        return try await makeRawRequest(url: url, method: method, headers: headers!, jsonPayload: jsonPayload)
+        return try await makeRawRequest(url: url, method: method, headers: headers, jsonPayload: jsonPayload)
     }
     
-    public func makeRawRequest(url: URL, method: String, headers: [String: String], jsonPayload: [String: Any]? = nil) async throws -> [String: Any] {
+    public func makeRawRequest(url: URL, method: String, headers: [String: String]? = nil, jsonPayload: [String: Any]? = nil) async throws -> [String: Any] {
         var request = URLRequest(url: url)
         request.httpMethod = method
         
         // Set headers if provided
-        headers.forEach { key, value in
+        headers?.forEach { key, value in
             request.addValue(value, forHTTPHeaderField: key)
         }
         
