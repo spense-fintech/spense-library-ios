@@ -21,8 +21,8 @@ struct EncryptionManager {
         
         do {
             let sealedBox = try AES.GCM.seal(dataToEncrypt, using: key, nonce: iv)
-            // Prepend IV to the ciphertext only (ignoring the tag)
-            return iv + sealedBox.ciphertext
+            // Combine IV, ciphertext, and tag
+            return iv + sealedBox.ciphertext + sealedBox.tag
         } catch {
             print("Encryption error: \(error)")
             return nil
@@ -30,19 +30,25 @@ struct EncryptionManager {
     }
     
     static func decryptAES(encryptedData: Data, key: SymmetricKey) -> String? {
-        guard encryptedData.count > 12 else {
+        // AES GCM tag is typically 16 bytes (128 bits)
+        let tagLength = 16
+
+        guard encryptedData.count > 12 + tagLength else {
             print("Decryption error: Data too short")
             return nil
         }
 
         let iv = encryptedData.prefix(12)
-        let ciphertext = encryptedData.dropFirst(12)
-
-        print("Nonce size: \(iv.count), Ciphertext size: \(ciphertext.count)")
+        let tagAndCiphertext = encryptedData.dropFirst(12)
+        guard let tag = tagAndCiphertext.suffix(tagLength) as? Data,
+              let ciphertext = tagAndCiphertext.dropLast(tagLength) as? Data else {
+            print("Decryption error: Unable to extract tag and ciphertext")
+            return nil
+        }
 
         do {
             let nonce = try AES.GCM.Nonce(data: iv)
-            let sealedBox = try AES.GCM.SealedBox(nonce: nonce, ciphertext: ciphertext, tag: Data())
+            let sealedBox = try AES.GCM.SealedBox(nonce: nonce, ciphertext: ciphertext, tag: tag)
             let decryptedData = try AES.GCM.open(sealedBox, using: key)
             return String(data: decryptedData, encoding: .utf8)
         } catch {
@@ -51,17 +57,13 @@ struct EncryptionManager {
         }
     }
 
-
-    
-    static func encryptRSA(base64EncodedString: String, publicKey: SecKey) -> String? {
-        guard let dataToEncrypt = Data(base64Encoded: base64EncodedString) else { return nil }
-        
+    static func encryptRSA(dataToEncrypt: Data, publicKey: SecKey) -> String? {
         let algorithm: SecKeyAlgorithm = .rsaEncryptionOAEPSHA256
         guard SecKeyIsAlgorithmSupported(publicKey, .encrypt, algorithm) else {
             print("Algorithm not supported.")
             return nil
         }
-        
+
         var error: Unmanaged<CFError>?
         guard let cipherText = SecKeyCreateEncryptedData(publicKey, algorithm, dataToEncrypt as CFData, &error) else {
             if let error = error?.takeRetainedValue() {
@@ -98,9 +100,6 @@ struct EncryptionManager {
     
     static func getPublicKeyAndKid() async throws -> (SecKey, String) {
         let (publicKeyString, kid) = try await getPublicKeyAndKidString()
-        
-        print(publicKeyString, kid)
-        
         let publicKey = try convertPEMStringToSecKey(publicKeyString)
         return (publicKey, kid)
     }
@@ -155,26 +154,41 @@ struct EncryptionManager {
         return secKey
     }
     
-    static func convertPrivatePEMStringToSecKey(_ pemString: String) throws -> SecKey {
+    enum KeyConversionError: Error {
+        case invalidPrivateKey, dataConversionFailed, attributesMissing
+    }
+
+    static func convertPEMToPrivateKey(pemString: String) throws -> SecKey {
+        // Ensure the PEM string format is correctly prepared for base64 decoding
         let base64String = pemString
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: "-----BEGIN PRIVATE KEY-----", with: "")
-            .replacingOccurrences(of: "-----END PRIVATE KEY-----", with: "")
+            .replacingOccurrences(of: "-----BEGIN RSA PRIVATE KEY-----", with: "")
+            .replacingOccurrences(of: "-----END RSA PRIVATE KEY-----", with: "")
+            .replacingOccurrences(of: "\r\n", with: "")
             .replacingOccurrences(of: "\n", with: "")
+            .replacingOccurrences(of: " ", with: "") // Ensure no spaces are included
         
+        print("Base64 String Length: \(base64String.count)")
+
         guard let data = Data(base64Encoded: base64String) else {
+            print("Failed to convert base64 string to Data")
             throw NetworkError.invalidPrivateKey
         }
-        
+
+        print("Data Length: \(data.count) bytes")
+
         let options: [String: Any] = [
             kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
-            kSecAttrKeyClass as String: kSecAttrKeyClassPrivate
+            kSecAttrKeyClass as String: kSecAttrKeyClassPrivate,
         ]
-        
-        guard let secKey = SecKeyCreateWithData(data as CFData, options as CFDictionary, nil) else {
+
+        var error: Unmanaged<CFError>?
+        guard let privateKey = SecKeyCreateWithData(data as CFData, options as CFDictionary, &error) else {
+            if let error = error {
+                print("Error creating private key: \(error.takeRetainedValue())")
+            }
             throw NetworkError.invalidPrivateKey
         }
-        
-        return secKey
+
+        return privateKey
     }
 }

@@ -46,7 +46,6 @@ public class SpenseLibrary {
                 let hostName = self.hostName
                 do {
                     let checkProductsResponse = try await NetworkManager.shared.makeRequest(url: URL(string: ServiceNames.BANKING_ACCOUNTS_COUNT.dynamicParams(with: ["bank": bank]))!, method: "GET")
-                    print(checkProductsResponse)
                     if ((checkProductsResponse["count"] as! Int) < 1) {
                         await MainActor.run {
                             viewController.dismiss(animated: true, completion: completion)
@@ -79,27 +78,17 @@ public class SpenseLibrary {
     }
     
     public func open(on viewController: UIViewController, withSlug slug: String) {
-        let webVC = WebViewController(urlString: "\(hostName ?? "https://partner.uat.spense.money")\(slug)")
+        let webVC = WebViewController(urlString: "\(EnvManager.hostName)\(slug)")
         let navVC = UINavigationController(rootViewController: webVC)
         navVC.modalPresentationStyle = .fullScreen
         viewController.present(navVC, animated: true, completion: nil)
     }
     
     public func getViewController(withSlug slug: String) -> UINavigationController {
-        let webVC = WebViewController(urlString: "\(hostName ?? "https://partner.uat.spense.money")\(slug)")
+        let webVC = WebViewController(urlString: "\(EnvManager.hostName)\(slug)")
         let navVC = UINavigationController(rootViewController: webVC)
         navVC.modalPresentationStyle = .fullScreen
         return navVC
-    }
-    
-    public func test() async throws {
-        do {
-            let jsonPayload = ["hello": "world"]
-            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "https://5af5-106-51-17-35.ngrok-free.app/api/global/time")!, method: "GET")
-            print(response)
-        } catch {
-            print("error \(error)")
-        }
     }
 }
 
