@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 @available(iOS 16.0, *)
 public class NetworkManager {
@@ -21,13 +22,20 @@ public class NetworkManager {
     
     public func makeRequest(url: URL, method: String, headers: [String: String]? = nil, jsonPayload: [String: Any]? = nil) async throws -> [String: Any] {
         let encrypted = true
+        var mandatoryHeaders = headers ?? [String: String]()
+        mandatoryHeaders["device_uuid"] = await UIDevice.current.identifierForVendor?.uuidString
+        mandatoryHeaders["manufacturer"] = "Apple"
+        mandatoryHeaders["model"] = UIDevice.modelName
+        mandatoryHeaders["os"] = "iOS"
+        mandatoryHeaders["os_version"] = await UIDevice.current.systemVersion
+        mandatoryHeaders["app_version"] = PackageInfo.version
         if encrypted {
-            return try await makeEncryptedRequest(url: url, method: method, headers: headers, jsonPayload: jsonPayload)
+            return try await makeEncryptedRequest(url: url, method: method, headers: mandatoryHeaders, jsonPayload: jsonPayload)
         }
-        return try await makeRawRequest(url: url, method: method, headers: headers, jsonPayload: jsonPayload)
+        return try await makeRawRequest(url: url, method: method, headers: mandatoryHeaders, jsonPayload: jsonPayload)
     }
     
-    public func makeRawRequest(url: URL, method: String, headers: [String: String]?, jsonPayload: [String: Any]? = nil) async throws -> [String: Any] {
+    private func makeRawRequest(url: URL, method: String, headers: [String: String]?, jsonPayload: [String: Any]? = nil) async throws -> [String: Any] {
         var request = URLRequest(url: url)
         request.httpMethod = method
         
@@ -59,7 +67,7 @@ public class NetworkManager {
         }
     }
     
-    public func makeEncryptedRequest(url: URL, method: String, headers: [String: String]? = nil, jsonPayload: [String: Any]? = nil) async throws -> [String: Any] {
+    private func makeEncryptedRequest(url: URL, method: String, headers: [String: String]? = nil, jsonPayload: [String: Any]? = nil) async throws -> [String: Any] {
         
         do {
             let (publicKey, kid) = try await EncryptionManager.getPublicKeyAndKid()

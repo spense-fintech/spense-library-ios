@@ -13,6 +13,7 @@ struct BankingDetailsView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var cif = ""
     @State private var dob = Date()
+    @State private var dobString = ""
     @State private var pan = ""
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
@@ -87,7 +88,10 @@ struct BankingDetailsView: View {
                                 let dateFormatter = DateFormatter()
                                 dateFormatter.dateFormat = "yyyy-MM-dd"
                                 
-                                print(dateFormatter.string(from: date ?? Date()))
+                                dobString = dateFormatter.string(from: date ?? Date())
+                                
+                                print(dobString)
+                                
                                 if cif.isEmpty {
                                     alertMessage = "CIF cannot be empty"
                                     showAlert = true
@@ -99,7 +103,7 @@ struct BankingDetailsView: View {
                                     return
                                 }
                                 
-                                navigateToDeviceBinding = true
+                                await matchCustomerDetails()
                             }
                         }) {
                             Text("Continue").font(.headline)
@@ -120,6 +124,22 @@ struct BankingDetailsView: View {
                 }
         }.navigationBarBackButtonHidden(true)
             .toolbar(.hidden)
+    }
+    
+    private func matchCustomerDetails () async {
+        let params = ["bank": "spense"]
+        let payload = ["customer_id": cif, "pan": pan, "dob": dobString]
+        do {
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: ServiceNames.BANKING_CUSTOMER_CHECK.dynamicParams(with: params))!, method: "POST", jsonPayload: payload)
+            if (response["type"] as! String == "danger") {
+                alertMessage = response["message"] as! String
+                showAlert = true
+            } else if (response["type"] as! String == "success") {
+                navigateToDeviceBinding = true
+            }
+        } catch {
+            print(error)
+        }
     }
 }
 
