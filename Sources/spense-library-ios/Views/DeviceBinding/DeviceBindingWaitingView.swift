@@ -65,7 +65,7 @@ struct DeviceBindingWaitingView: View {
     private func checkDeviceBindingStatus() async {
         do {
             let bank = "spense"
-            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(ServiceNames.DEVICE_BINDING_STATUS)/\(UIDevice.current.identifierForVendor?.uuidString ?? "")")!, method: "GET")
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: "\(ServiceNames.DEVICE_BINDING_STATUS.dynamicParams(with: ["partner": bank]))/\(UIDevice.current.identifierForVendor?.uuidString ?? "")")!, method: "GET")
             if response["status"] as? String == "SUCCESS" {
                 timer?.invalidate()
                 isLoading = false

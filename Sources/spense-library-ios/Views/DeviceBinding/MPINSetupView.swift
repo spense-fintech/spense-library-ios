@@ -235,6 +235,10 @@ struct MPINSetupView: View {
     
     private func continueButtonAction() {
         let enteredPin = pinDigits.joined()
+        if (enteredPin == "" || enteredPin.count < 4) {
+            presentAlert(withTitle: "Error", withMessage: "Please enter a 4 digit PIN to proceed")
+            return
+        }
         if resetPinFlow {
             let savedPin = SharedPreferenceManager.shared.getValue(forKey: "MPIN") ?? ""
             if otpEntered == 0 {
@@ -242,7 +246,7 @@ struct MPINSetupView: View {
                     otpEntered += 1
                     resetPinFields()
                 } else {
-                    presentAlert(withTitle: "Incorrect PIN", withMessage: "Please check the MPIN you entered")
+                    presentAlert(withTitle: "Incorrect MPIN", withMessage: "Please check the MPIN you entered")
                 }
             } else if otpEntered == 1 {
                 if enteredPin == savedPin {
@@ -258,7 +262,7 @@ struct MPINSetupView: View {
                     handleConfirmedMPIN(mPIN)
                 } else {
                     // Handle mismatch
-                    presentAlert(withTitle: "Incorrect PIN", withMessage: "Please check the MPIN you entered")
+                    presentAlert(withTitle: "Incorrect MPIN", withMessage: "Please check the MPIN you entered")
                     resetPinFields()
                 }
             }

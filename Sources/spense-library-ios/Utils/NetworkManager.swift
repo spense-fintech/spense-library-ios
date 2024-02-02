@@ -50,7 +50,6 @@ public class NetworkManager {
         
         do {
             let json = try JSONSerialization.jsonObject(with: data, options: [.allowFragments])
-            print("JSON \(json)")
             guard let jsonDictionary = json as? [String: Any] else {
                 throw NetworkError.invalidJSONFormat
             }
@@ -101,8 +100,10 @@ public class NetworkManager {
                       let jsonObject = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
                     throw NetworkError.invalidJSONFormat
                 }
+                print(jsonObject)
                 return jsonObject
             } else {
+                print(response)
                 return response
             }
         } catch {
