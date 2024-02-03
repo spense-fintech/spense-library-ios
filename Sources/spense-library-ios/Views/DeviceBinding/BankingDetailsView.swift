@@ -106,17 +106,29 @@ struct BankingDetailsView: View {
                                 await matchCustomerDetails()
                             }
                         }) {
-                            Text("Continue").font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color(hex: 0x037EAB))
-                                .cornerRadius(8)
+                            if cif.isEmpty || pan.isEmpty {
+                                Text("Continue").font(.headline)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color(hex: 0x037EAB, alpha: 0.3))
+                                    .cornerRadius(8)
+                            } else {
+                                if cif.isEmpty || pan.isEmpty {
+                                    Text("Continue").font(.headline)
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                        .background(Color(hex: 0x037EAB))
+                                        .cornerRadius(8)
+                                }
+                            }
                         }
                         .padding(.top, 24)
                         .padding(.horizontal)
                         
                     }
+                    .disabled(cif.isEmpty || pan.isEmpty)
                 }
             }.background(Color(hex: 0xF5F5F5))
                 .alert(isPresented: $showAlert) {
