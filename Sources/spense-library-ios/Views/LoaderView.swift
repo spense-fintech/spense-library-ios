@@ -11,7 +11,7 @@ import SwiftUI
 struct LoaderView: View {
     var bodyText: String
     
-    init(bodyText: String = "Processing...") {
+    init(bodyText: String = "Processing") {
         self.bodyText = bodyText
     }
     var body: some View {
@@ -20,12 +20,12 @@ struct LoaderView: View {
             VStack {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .gray))
-                    .scaleEffect(2)
+                    .scaleEffect(1.75)
                     .frame(width: 75, height: 75)
                     .padding(.horizontal, 48)
                 
                 Text("Please wait!")
-                    .font(.system(size: 12))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color(hex: 0x212121))
                     .padding(.top)
                 
@@ -33,7 +33,7 @@ struct LoaderView: View {
                 Text(bodyText)
                     .font(.system(size: 12))
                     .foregroundStyle(Color(hex: 0x666666))
-                    .padding(.top, 8)
+                    .padding(.top, 2)
             }
             .padding(24) // Adjust padding to match your Android layout
             .background(Color.white) // CardView background
