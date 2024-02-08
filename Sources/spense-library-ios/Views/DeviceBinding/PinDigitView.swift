@@ -15,7 +15,7 @@ struct PinDigitView: View {
     
     var body: some View {
         TextField("", text: $digit)
-            .font(.system(size: 16, weight: .semibold))
+            .font(.system(size: 20, weight: .semibold))
             .multilineTextAlignment(.center)
             .keyboardType(.numberPad)
             .disableAutocorrection(true)
