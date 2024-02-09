@@ -1,6 +1,6 @@
 //
 //  SwiftUIView.swift
-//  
+//
 //
 //  Created by Varun on 29/01/24.
 //
@@ -39,7 +39,6 @@ struct BankingDetailsView: View {
                         .padding(.leading, 16)
                     
                     TextField("CIF", text: $cif)
-                        .keyboardType(.emailAddress)
                         .font(.system(size: 16, weight: .semibold))
                         .padding(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
                         .frame(height: 60)
@@ -50,9 +49,11 @@ struct BankingDetailsView: View {
                         .multilineTextAlignment(.leading)
                         .padding(.top, 24)
                         .padding(.horizontal)
+                        .onChange(of: cif) { newValue in
+                                cif = newValue.uppercased()
+                            }
                     
                     TextField("PAN", text: $pan)
-                        .keyboardType(.emailAddress)
                         .font(.system(size: 16, weight: .semibold))
                         .padding(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
                         .frame(height: 60)
@@ -63,6 +64,9 @@ struct BankingDetailsView: View {
                         .multilineTextAlignment(.leading)
                         .padding(.top, 24)
                         .padding(.horizontal)
+                        .onChange(of: pan) { newValue in
+                                pan = newValue.uppercased()
+                            }
                     
                     DatePicker("DOB", selection: $dob, displayedComponents: .date)
                         .datePickerStyle(DefaultDatePickerStyle())
@@ -90,8 +94,6 @@ struct BankingDetailsView: View {
                                 
                                 dobString = dateFormatter.string(from: date ?? Date())
                                 
-                                print(dobString)
-                                
                                 if cif.isEmpty {
                                     alertMessage = "CIF cannot be empty"
                                     showAlert = true
@@ -106,23 +108,13 @@ struct BankingDetailsView: View {
                                 await matchCustomerDetails()
                             }
                         }) {
-                            if cif.isEmpty || pan.isEmpty {
-                                Text("Continue").font(.headline)
+                            Text("Continue")
+                                    .font(.headline)
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
                                     .padding()
-                                    .background(Color(hex: 0x037EAB, alpha: 0.3))
+                                    .background(cif.isEmpty || pan.isEmpty ? Color(hex: 0x037EAB, alpha: 0.3) : Color(hex: 0x037EAB))
                                     .cornerRadius(8)
-                            } else {
-                                if cif.isEmpty || pan.isEmpty {
-                                    Text("Continue").font(.headline)
-                                        .foregroundColor(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .background(Color(hex: 0x037EAB))
-                                        .cornerRadius(8)
-                                }
-                            }
                         }
                         .padding(.top, 24)
                         .padding(.horizontal)
