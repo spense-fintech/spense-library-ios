@@ -16,10 +16,10 @@ struct WaitingView: View {
     @Binding var deviceId: Int
     @Binding var deviceBindingId: String
     @State private var isLoading = false
+    var partner: String
     
     private func initiateDeviceBinding() async {
         do {
-            let partner = "spense"
             let parameters = ["device_binding_id": deviceBindingId] as [String : Any]
             let response = try await NetworkManager.shared.makeRequest(url: URL(string: ServiceNames.DEVICE_BIND.dynamicParams(with: ["partner": partner]))!, method: "POST", jsonPayload: parameters)
             isLoading = false

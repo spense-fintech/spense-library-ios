@@ -18,6 +18,8 @@ struct BankingDetailsView: View {
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
     @State private var navigateToDeviceBinding = false
+    var bank: String
+    var partner: String
     var onSuccess: () -> Void
     
     var body: some View {
@@ -79,7 +81,7 @@ struct BankingDetailsView: View {
                         .padding(.horizontal)
                     
                     
-                    NavigationLink(destination: DeviceBindingWaitingView(onSuccess: onSuccess, onReset: {
+                    NavigationLink(destination: DeviceBindingWaitingView(bank: bank, partner: partner, onSuccess: onSuccess, onReset: {
                         print("reset cif entry page")
                     }), isActive: $navigateToDeviceBinding) {
                         Button(action: {
@@ -131,10 +133,9 @@ struct BankingDetailsView: View {
     }
     
     private func matchCustomerDetails () async {
-        let params = ["bank": "spense"]
         let payload = ["customer_id": cif, "pan": pan, "dob": dobString]
         do {
-            let response = try await NetworkManager.shared.makeRequest(url: URL(string: ServiceNames.BANKING_CUSTOMER_CHECK.dynamicParams(with: params))!, method: "POST", jsonPayload: payload)
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: ServiceNames.BANKING_CUSTOMER_CHECK.dynamicParams(with: ["bank": bank]))!, method: "POST", jsonPayload: payload)
             if (response["type"] as! String == "danger") {
                 alertMessage = response["message"] as! String
                 showAlert = true
@@ -149,7 +150,7 @@ struct BankingDetailsView: View {
 
 @available(iOS 16.0, *)
 #Preview {
-    BankingDetailsView(onSuccess: {
+    BankingDetailsView(bank: "spense", partner: "spense", onSuccess: {
         print("onSuccess")
     })
 }

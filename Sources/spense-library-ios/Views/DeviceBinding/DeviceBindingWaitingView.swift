@@ -17,6 +17,8 @@ struct DeviceBindingWaitingView: View {
     @State private var timer: Timer? = nil
     @State private var pollingCounter = 0
     @State private var deviceBindingId = UUID().uuidString
+    var bank: String
+    var partner: String
     var onSuccess: () -> Void
     var onReset: () -> Void
     @State private var isLoading = false
@@ -25,7 +27,7 @@ struct DeviceBindingWaitingView: View {
         ZStack {
             switch currentScreen {
             case .waiting:
-                WaitingView(currentScreen: $currentScreen, isShowingMessageCompose: $isShowingMessageCompose, deviceAuthCode: $deviceAuthCode, deviceId: $deviceId, deviceBindingId: $deviceBindingId)
+                WaitingView(currentScreen: $currentScreen, isShowingMessageCompose: $isShowingMessageCompose, deviceAuthCode: $deviceAuthCode, deviceId: $deviceId, deviceBindingId: $deviceBindingId, partner: partner)
             case .failure:
                 FailureView(currentScreen: $currentScreen)
             case .mpinsetup:
@@ -64,8 +66,7 @@ struct DeviceBindingWaitingView: View {
     
     private func checkDeviceBindingStatus() async {
         do {
-            let bank = "spense"
-            let response = try await NetworkManager.shared.makeRequest(url: URL(string: (ServiceNames.DEVICE_BINDING_STATUS.dynamicParams(with: ["partner": bank])))!, method: "GET")
+            let response = try await NetworkManager.shared.makeRequest(url: URL(string: (ServiceNames.DEVICE_BINDING_STATUS.dynamicParams(with: ["partner": partner])))!, method: "GET")
             if response["status"] as? String == "SUCCESS" {
                 timer?.invalidate()
                 isLoading = false
@@ -92,7 +93,6 @@ struct DeviceBindingWaitingView: View {
     
     private func failDeviceBinding() async {
         do {
-            let partner = "spense"
             let parameters = ["device_id": deviceId] as [String : Any]
             let response = try await NetworkManager.shared.makeRequest(url: URL(string: ServiceNames.DEVICE_BIND.dynamicParams(with: ["partner": partner]))!, method: "PUT", jsonPayload: parameters)
             isLoading = false
@@ -110,7 +110,7 @@ struct DeviceBindingWaitingView: View {
 
 @available(iOS 16.0, *)
 #Preview {
-    DeviceBindingWaitingView(onSuccess: {
+    DeviceBindingWaitingView(bank: "spense", partner: "spense", onSuccess: {
         print("Success DeviceBindingWaitingView")
     }, onReset: {
         print("Reset DeviceBindingWaitingView")

@@ -28,13 +28,13 @@ public class SpenseLibrary {
         return try await NetworkManager.shared.makeRequest(url: URL(string: ServiceNames.LOGIN)!, method: "POST", jsonPayload: ["token": token])
     }
     
-    public func bindDevice(on viewController: UIViewController, completion: @escaping () -> Void) {
+    public func bindDevice(on viewController: UIViewController, bank: String, partner: String, completion: @escaping () -> Void) {
         let isMPINSet = !(SharedPreferenceManager.shared.getValue(forKey: "MPIN") ?? "").isEmpty
         if (isMPINSet) {
             let rootView = AnyView(MPINSetupView(isMPINSet: true, onSuccess: {
                 viewController.dismiss(animated: true, completion: completion)
             }, onReset: {
-                self.bindDevice(on: viewController, completion: completion)
+                self.bindDevice(on: viewController, bank: bank, partner: partner, completion: completion)
             }))
             
             let hostingController = UIHostingController(rootView: rootView)
@@ -42,7 +42,6 @@ public class SpenseLibrary {
             viewController.present(hostingController, animated: true, completion: nil)
         } else {
             Task {
-                let bank = "spense"
                 let hostName = self.hostName
                 do {
                     let checkProductsResponse = try await NetworkManager.shared.makeRequest(url: URL(string: ServiceNames.BANKING_ACCOUNTS_COUNT.dynamicParams(with: ["bank": bank]))!, method: "GET")
@@ -51,7 +50,7 @@ public class SpenseLibrary {
                             viewController.dismiss(animated: true, completion: completion)
                         }
                     } else {
-                        let rootView = AnyView(BankingDetailsView(onSuccess: {
+                        let rootView = AnyView(BankingDetailsView(bank: bank, partner: partner, onSuccess: {
                             Task {
                                 await MainActor.run {
                                     viewController.dismiss(animated: true, completion: completion)
