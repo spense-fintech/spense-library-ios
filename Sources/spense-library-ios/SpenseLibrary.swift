@@ -14,9 +14,10 @@ public class SpenseLibrary {
     private var hostName = EnvManager.hostName
     var onMPINSetupSuccess: (() -> Void)?
     
-    init(hostName: String) {
+    init(hostName: String, whitelistedUrls: Array<String>) {
         self.hostName = hostName
         EnvManager.hostName = hostName
+        EnvManager.whitelistedUrls = whitelistedUrls
     }
     
     public func checkLogin() async throws -> [String: Any] {

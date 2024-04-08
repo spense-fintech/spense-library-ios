@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Varun on 26/12/23.
 //
@@ -13,12 +13,12 @@ public class SpenseLibrarySingleton {
 
     private var spenseLibrary: SpenseLibrary?
 
-    public func initialize(withHostName hostName: String) {
+    public func initialize(withHostName hostName: String, whitelistedUrls whitelistedUrls: Array<String>) {
         guard spenseLibrary == nil else {
             print("Error: SpenseLibrary is already initialized. Call reset() to reinitialize.")
             return
         }
-        spenseLibrary = SpenseLibrary(hostName: hostName)
+        spenseLibrary = SpenseLibrary(hostName: hostName, whitelistedUrls: whitelistedUrls)
     }
 
     public var instance: SpenseLibrary {
