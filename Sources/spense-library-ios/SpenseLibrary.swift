@@ -90,6 +90,12 @@ public class SpenseLibrary {
         navVC.modalPresentationStyle = .fullScreen
         return navVC
     }
+    
+//    public func logout() async throws {
+//        DispatchQueue.main.async {
+//            NotificationCenter.default.post(name: .userDidLogoutNotification, object: nil)
+//        }
+//    }
 }
 
 public enum SpenseError: Error {

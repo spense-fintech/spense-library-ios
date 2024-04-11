@@ -14,11 +14,30 @@ import SwiftUI
 public class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
     
     private let whitelistedUrls = ["razorpay.com"]
+    public weak var delegate: WebViewControllerDelegate?
     
     private lazy var webView: WKWebView = {
         let webConfiguration = WKWebViewConfiguration()
         let userContentController = WKUserContentController()
+        
+        // Add your existing message handler
         userContentController.add(self, name: "iosListener")
+        
+        // Script to intercept console.log messages and forward them to Swift
+        let scriptSource = """
+        var originalConsoleLog = console.log;
+        console.log = function(message) {
+            window.webkit.messageHandlers.interceptor.postMessage(message);
+            originalConsoleLog.apply(console, arguments);
+        };
+        """
+        
+        let script = WKUserScript(source: scriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        userContentController.addUserScript(script)
+        
+        // Add the interceptor message handler
+        userContentController.add(self, name: "interceptor")
+        
         webConfiguration.userContentController = userContentController
         
         let webView = WKWebView(frame: .zero, configuration: webConfiguration)
@@ -166,6 +185,23 @@ public class WebViewController: UIViewController, WKNavigationDelegate, WKUIDele
         UIApplication.shared.open(url, options: [:], completionHandler: nil)
     }
     
+    private func openWhatsApp() {
+        let phoneNumber = "+918073700288"  // Use the appropriate phone number
+        let appURL = URL(string: "https://api.whatsapp.com/send?phone=\(phoneNumber)&text=Hello")!
+        if UIApplication.shared.canOpenURL(appURL) {
+            UIApplication.shared.open(appURL, options: [:], completionHandler: nil)
+        } else {
+            // Optionally provide feedback to the user that WhatsApp is not installed
+            print("WhatsApp is not installed")
+        }
+    }
+    
+    private func handleSessionExpired() {
+        self.dismiss(animated: true) {
+            self.delegate?.sessionDidExpire()
+        }
+    }
+    
     enum InvalidURLError: Error {
         case invalidURL
     }
@@ -180,6 +216,23 @@ extension WebViewController: WKScriptMessageHandler {
                 // Handle the message or perform an action based on the message content
             }
         }
+        
+        if message.name == "interceptor", let messageBody = message.body as? String {
+            print("Received console message: \(messageBody)")
+            
+            if messageBody.contains("/exit") {
+                self.dismiss(animated: true, completion: nil)
+            } else if messageBody.contains("generatePin()") {
+                // Navigate to PpiPinActivity equivalent in iOS
+            } else if messageBody.contains("logout()") {
+                // Handle logout
+                DispatchQueue.main.async {
+                    self.dismiss(animated: true)
+                    NotificationCenter.default.post(name: .userDidLogoutNotification, object: nil)
+                }
+            }
+        }
+        
     }
 }
 
@@ -192,6 +245,25 @@ extension WebViewController {
         
         // Convert your logic to Swift
         let urlString = url.absoluteString
+        
+        print(urlString)
+        
+        if urlString.contains("session-expired") {
+            // Close the WebView and navigate back to the SignIn screen
+            // Note: Implementation will vary based on how you navigate in your app
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .userDidLogoutNotification, object: nil)
+            }
+            decisionHandler(.cancel) // Stop loading
+            return
+        }
+        
+        if urlString.contains("api.whatsapp.com") {
+            openWhatsApp()
+            decisionHandler(.cancel) // Stop loading as we are opening WhatsApp externally
+            return
+        }
+        
         
         // Loop through whitelisted URLs to find a match
         for whitelistedUrl in whitelistedUrls {
