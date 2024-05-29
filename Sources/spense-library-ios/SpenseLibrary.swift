@@ -32,7 +32,7 @@ public class SpenseLibrary {
     public func bindDevice(on viewController: UIViewController, bank: String, partner: String, completion: @escaping () -> Void) {
         let isMPINSet = !(SharedPreferenceManager.shared.getValue(forKey: "MPIN") ?? "").isEmpty
         if (isMPINSet) {
-            let rootView = AnyView(MPINSetupView(isMPINSet: true, onSuccess: {
+            let rootView = AnyView(MPINSetupView(isMPINSet: true, partner: partner, onSuccess: {
                 viewController.dismiss(animated: true, completion: completion)
             }, onReset: {
                 self.bindDevice(on: viewController, bank: bank, partner: partner, completion: completion)
